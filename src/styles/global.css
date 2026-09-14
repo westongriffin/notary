@@ -1,0 +1,6 @@
+/* Site-wide CSS. Wix injects this file into every page. Keep it minimal. */
+:root {
+  --status-draft: #8a8a8a;
+  --status-pending: #d98c00;
+  --status-completed: #1f8a4c;
+}

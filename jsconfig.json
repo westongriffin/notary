@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "checkJs": true,
+    "strict": false,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "target": "es2020",
+    "baseUrl": ".",
+    "paths": {
+      "backend/*": ["./src/backend/*"],
+      "public/*": ["./src/public/*"]
+    }
+  },
+  "include": ["src/**/*", ".wix/types/**/*"],
+  "exclude": ["node_modules"]
+}
