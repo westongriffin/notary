@@ -94,7 +94,7 @@ service cloud.firestore {
           return d.keys().hasOnly(['entryNumber', 'actDate', 'actType', 'clientName',
                                    'clientAddress', 'clientEmail', 'clientPhone',
                                    'idMethod', 'fee', 'documentDescription', 'notes',
-                                   'voided', 'voidReason', 'createdAt', 'updatedAt'])
+                                   'signature', 'voided', 'voidReason', 'createdAt', 'updatedAt'])
             && d.entryNumber is int && d.entryNumber >= 1
             && d.actDate is timestamp
             && d.actDate <= request.time + duration.value(5, 'm')
@@ -110,7 +110,17 @@ service cloud.firestore {
             && optStr(d, 'clientPhone', 40)
             && optStr(d, 'documentDescription', 500)
             && optStr(d, 'notes', 4000)
-            && optStr(d, 'voidReason', 500);
+            && optStr(d, 'voidReason', 500)
+            && validSignature(d);
+        }
+        // Optional signer signature: a PNG data URL from the signature pad.
+        // It is part of the record and, like the other core fields, cannot
+        // be changed after insert (it is not in the mutable list below).
+        function validSignature(d) {
+          return !('signature' in d) || d.signature == null
+            || (d.signature is string
+                && d.signature.size() <= 300000
+                && d.signature.matches('^data:image/png;base64,[A-Za-z0-9+/=]+$'));
         }
 
         allow read: if isOwner(uid);

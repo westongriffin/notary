@@ -4,9 +4,11 @@ import { logTransaction, voidTransaction, updateTransactionNotes } from '../db.j
 import { ACT_TYPES, ID_METHODS } from '../constants.js';
 import { money } from '../validators.js';
 import { transactionsToCsv, downloadText } from '../csv.js';
+import { SignaturePad } from '../signature-pad.js';
 
 let pendingVoidId = null;
 let pendingNotesId = null;
+let signaturePad = null;
 
 export function init() {
   const form = $('#tx-form');
@@ -14,7 +16,9 @@ export function init() {
   fillSelect(form.idMethod, ID_METHODS, { placeholder: 'Select…' });
   form.actDate.value = toLocalInputValue();
   form.addEventListener('submit', onSubmit);
-  form.addEventListener('reset', () => setTimeout(() => { form.actDate.value = toLocalInputValue(); showError(''); }));
+  form.addEventListener('reset', () => setTimeout(() => { form.actDate.value = toLocalInputValue(); showError(''); signaturePad?.clear(); }));
+  signaturePad = new SignaturePad($('#tx-signature'));
+  $('#tx-sig-clear').addEventListener('click', () => signaturePad.clear());
 
   ['#tx-from', '#tx-to', '#tx-search', '#tx-include-voided'].forEach((sel) => $(sel).addEventListener('input', render));
   $('#tx-export').addEventListener('click', exportCsv);
@@ -44,6 +48,7 @@ async function onSubmit(e) {
       fee: money(d.fee ?? 0),
       documentDescription: d.documentDescription,
       notes: d.notes,
+      signature: signaturePad.toDataURL(),
     });
     toast(`Entry #${entryNumber} added.`, 'success');
     form.reset();
@@ -101,9 +106,18 @@ export function render() {
       h('td', {}, t.clientName, h('span', { class: 'sub' }, t.clientAddress)),
       h('td', {}, t.idMethod),
       h('td', { class: 'num' }, fmtMoney(t.fee)),
+      h('td', {}, t.signature
+        ? h('img', { class: 'sig-thumb', src: t.signature, alt: 'Signature', title: 'View signature', onclick: () => openSignature(t) })
+        : h('span', { class: 'muted small' }, '—')),
       actions,
     ));
   }
+}
+
+function openSignature(t) {
+  $('#sig-entry').textContent = `#${t.entryNumber}`;
+  $('#sig-image').src = t.signature;
+  $('#sig-dialog').showModal();
 }
 
 function openVoid(t) {

@@ -11,6 +11,7 @@ const COLUMNS = [
   ['fee', 'Fee'],
   ['documentDescription', 'Document'],
   ['notes', 'Notes'],
+  ['signature', 'Signature on file'],
   ['voided', 'Voided'],
   ['voidReason', 'Void Reason'],
 ];
@@ -26,6 +27,7 @@ export function transactionsToCsv(rows) {
   const lines = rows.map((r) => COLUMNS.map(([key]) => {
     if (key === 'actDate') return cell(fmtDateTime(r.actDate));
     if (key === 'fee') return cell(Number(r.fee).toFixed(2));
+    if (key === 'signature') return cell(Boolean(r.signature));
     return cell(r[key]);
   }).join(','));
   return [header, ...lines].join('\r\n');

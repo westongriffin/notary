@@ -8,6 +8,10 @@ export class ValidationError extends Error {
 
 const need = (cond, msg, field) => { if (!cond) throw new ValidationError(msg, field); };
 
+// PNG data URL produced by the signature pad. Mirrored in firestore.rules.
+export const SIGNATURE_RE = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/;
+export const SIGNATURE_MAX = 300000;
+
 export function validateTransaction(t) {
   need(t.actDate instanceof Date && !Number.isNaN(t.actDate.getTime()), 'Enter a valid date and time.', 'actDate');
   need(t.actDate.getTime() <= Date.now() + 5 * 60 * 1000, 'The act date cannot be in the future.', 'actDate');
@@ -16,6 +20,10 @@ export function validateTransaction(t) {
   need(typeof t.clientAddress === 'string' && t.clientAddress.length > 0 && t.clientAddress.length <= 500, 'Client address is required.', 'clientAddress');
   need(ID_METHODS.includes(t.idMethod), 'Choose how the signer was identified.', 'idMethod');
   need(typeof t.fee === 'number' && Number.isFinite(t.fee) && t.fee >= 0 && t.fee <= 100000, 'Fee must be a number between 0 and 100,000.', 'fee');
+  if (t.signature !== undefined && t.signature !== null) {
+    need(typeof t.signature === 'string' && SIGNATURE_RE.test(t.signature), 'Signature image is invalid.', 'signature');
+    need(t.signature.length <= SIGNATURE_MAX, 'Signature image is too large. Clear it and sign again.', 'signature');
+  }
   return t;
 }
 

@@ -123,6 +123,7 @@ export async function logTransaction(input) {
     fee: input.fee,
     documentDescription: input.documentDescription,
     notes: input.notes,
+    signature: input.signature || undefined,
   });
 
   const txRef = doc(col('transactions'));
@@ -143,6 +144,7 @@ export async function logTransaction(input) {
       fee: t.fee,
       documentDescription: t.documentDescription,
       notes: t.notes,
+      signature: t.signature,
       voided: false,
       createdAt: serverTimestamp(),
     }));

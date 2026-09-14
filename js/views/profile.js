@@ -47,10 +47,11 @@ function showError(id, msg) { const el = $(id); el.textContent = msg; el.hidden 
 async function onProfileSubmit(e) {
   e.preventDefault();
   const form = e.currentTarget;
+  const patch = formData(form); // read before disabling: disabled fields are excluded from FormData
   showError('#profile-error', '');
   setBusy(form, true);
   try {
-    await saveProfile(formData(form));
+    await saveProfile(patch);
     toast('Profile saved.', 'success');
     await reload(['profile']);
   } catch (err) {

@@ -76,6 +76,7 @@ Status (`valid` / `expiring` within 60 days / `expired`) is derived on read.
 | `idMethod` | enum | |
 | `fee` | number | 0 – 100,000 |
 | `clientEmail`, `clientPhone`, `documentDescription`, `notes` | string | |
+| `signature` | string | Optional signer signature as a PNG data URL from the on-screen pad; immutable |
 | `voided`, `voidReason` | bool, string | Void is one-way and needs a reason |
 
 After creation only notes, contact details, and the void flag can change.
