@@ -45,7 +45,6 @@
       <nav class="tabs" role="tablist" aria-label="Sections">
         <button role="tab" data-tab="overview" aria-selected="true" type="button">Overview</button>
         <button role="tab" data-tab="journal" aria-selected="false" type="button">Journal</button>
-        <button role="tab" data-tab="documents" aria-selected="false" type="button">Documents</button>
         <button role="tab" data-tab="profile" aria-selected="false" type="button">Profile</button>
       </nav>
 
@@ -115,38 +114,6 @@
             </table>
           </div>
           <p id="tx-empty" class="muted center" hidden>No journal entries yet.</p>
-        </div>
-      </section>
-
-      <!-- Documents -->
-      <section id="tab-documents" class="tab-panel" role="tabpanel" hidden>
-        <div class="card">
-          <div class="card-head"><h2>New document</h2></div>
-          <form id="doc-form" class="grid-form" novalidate>
-            <label class="span-2">Title <input name="title" required maxlength="300"></label>
-            <label>Status <select name="status"></select></label>
-            <label>Client name <input name="clientName" maxlength="200"></label>
-            <label class="span-2">Linked journal entry <select name="transactionId"></select></label>
-            <label class="span-2">File link (optional) <input name="fileUrl" type="url" maxlength="2000" placeholder="https://…"></label>
-            <label>File name <input name="fileName" maxlength="255"></label>
-            <label class="span-3">Notes <textarea name="notes" rows="2" maxlength="4000"></textarea></label>
-            <p id="doc-error" class="error span-3" hidden></p>
-            <div class="actions span-3">
-              <button class="btn btn-primary" type="submit">Create document</button>
-              <button class="btn btn-ghost" type="reset">Clear</button>
-            </div>
-          </form>
-        </div>
-        <div class="card">
-          <div class="card-head">
-            <h2>Documents</h2>
-            <div class="filters">
-              <select id="doc-filter"><option value="">All statuses</option></select>
-              <input id="doc-search" type="search" placeholder="Search title or client…">
-            </div>
-          </div>
-          <div id="doc-list" class="doc-list"></div>
-          <p id="doc-empty" class="muted center" hidden>No documents yet.</p>
         </div>
       </section>
 

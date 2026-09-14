@@ -4,10 +4,9 @@ import { ensureProfile } from './db.js';
 import { reload, reset } from './store.js';
 import * as overview from './views/overview.js';
 import * as journal from './views/journal.js';
-import * as documents from './views/documents.js';
 import * as profile from './views/profile.js';
 
-const views = { overview, journal, documents, profile };
+const views = { overview, journal, profile };
 let mode = 'signin'; // or 'signup'
 let booted = false;
 

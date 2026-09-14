@@ -33,18 +33,3 @@ export const CREDENTIAL_STATUS = Object.freeze({
   EXPIRING: 'expiring',
   EXPIRED: 'expired',
 });
-
-export const DOC_STATUS = Object.freeze({
-  DRAFT: 'Draft',
-  PENDING: 'Pending Signature',
-  COMPLETED: 'Completed',
-});
-
-export const DOC_STATUSES = Object.freeze(Object.values(DOC_STATUS));
-
-// Completed is terminal (enforced in firestore.rules as well).
-export const DOC_STATUS_TRANSITIONS = Object.freeze({
-  [DOC_STATUS.DRAFT]: [DOC_STATUS.PENDING, DOC_STATUS.COMPLETED],
-  [DOC_STATUS.PENDING]: [DOC_STATUS.DRAFT, DOC_STATUS.COMPLETED],
-  [DOC_STATUS.COMPLETED]: [],
-});

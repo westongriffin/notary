@@ -1,6 +1,6 @@
 // Client-side validation that mirrors firestore.rules so users get readable
 // errors before a write is attempted. The rules remain the authority.
-import { ACT_TYPES, ID_METHODS, CREDENTIAL_TYPES, DOC_STATUSES } from './constants.js';
+import { ACT_TYPES, ID_METHODS, CREDENTIAL_TYPES } from './constants.js';
 
 export class ValidationError extends Error {
   constructor(message, field) { super(message); this.name = 'ValidationError'; this.field = field; }
@@ -34,12 +34,6 @@ export function validateCredential(c) {
   need(c.expiresAt instanceof Date && !Number.isNaN(c.expiresAt.getTime()), 'Enter a valid expiration date.', 'expiresAt');
   need(c.expiresAt.getTime() > c.uploadedAt.getTime(), 'Expiration must be after the upload date.', 'expiresAt');
   return c;
-}
-
-export function validateDocument(d) {
-  need(typeof d.title === 'string' && d.title.length > 0 && d.title.length <= 300, 'Document title is required.', 'title');
-  need(DOC_STATUSES.includes(d.status), 'Unknown status.', 'status');
-  return d;
 }
 
 export function money(value) {

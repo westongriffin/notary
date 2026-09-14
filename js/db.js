@@ -5,10 +5,8 @@ import {
   query, orderBy, limit, runTransaction, serverTimestamp, Timestamp,
 } from './firebase.js';
 import { currentUser } from './auth.js';
-import {
-  CREDENTIAL_STATUS, CREDENTIAL_EXPIRING_WINDOW_DAYS, DOC_STATUS, DOC_STATUS_TRANSITIONS,
-} from './constants.js';
-import { validateTransaction, validateCredential, validateDocument } from './validators.js';
+import { CREDENTIAL_STATUS, CREDENTIAL_EXPIRING_WINDOW_DAYS } from './constants.js';
+import { validateTransaction, validateCredential } from './validators.js';
 
 const uid = () => {
   const u = currentUser();
@@ -167,57 +165,3 @@ export async function voidTransaction(id, reason) {
   if (!r) throw new Error('A reason is required to void an entry.');
   await updateDoc(doc(col('transactions'), id), { voided: true, voidReason: r, updatedAt: serverTimestamp() });
 }
-
-/* ───────────────────────────── documents ─────────────────────────── */
-
-export async function listDocuments() {
-  const snap = await getDocs(query(col('documents'), orderBy('lastStatusChange', 'desc'), limit(500)));
-  return snap.docs.map(withId);
-}
-
-export async function createDocument(input) {
-  const d = validateDocument({ title: input.title, status: input.status || DOC_STATUS.DRAFT });
-  const now = Timestamp.now();
-  await addDoc(col('documents'), strip({
-    title: d.title,
-    status: d.status,
-    transactionId: input.transactionId,
-    clientName: input.clientName,
-    fileUrl: input.fileUrl,
-    fileName: input.fileName,
-    notes: input.notes,
-    statusHistory: [{ status: d.status, at: now }],
-    lastStatusChange: now,
-    completedAt: d.status === DOC_STATUS.COMPLETED ? now : undefined,
-    createdAt: serverTimestamp(),
-  }));
-}
-
-export function allowedTransitions(fromStatus) { return DOC_STATUS_TRANSITIONS[fromStatus] || []; }
-
-export async function setDocumentStatus(docItem, to) {
-  if (docItem.status === to) return;
-  if (!allowedTransitions(docItem.status).includes(to)) {
-    throw new Error(`Cannot move a document from "${docItem.status}" to "${to}".`);
-  }
-  const now = Timestamp.now();
-  await updateDoc(doc(col('documents'), docItem.id), {
-    status: to,
-    statusHistory: [...(docItem.statusHistory || []), { status: to, at: now }],
-    lastStatusChange: now,
-    completedAt: to === DOC_STATUS.COMPLETED ? now : null,
-    updatedAt: serverTimestamp(),
-  });
-}
-
-export async function updateDocument(id, patch) {
-  const data = {};
-  for (const k of ['title', 'transactionId', 'clientName', 'fileUrl', 'fileName', 'notes']) {
-    if (k in patch) data[k] = patch[k] === undefined ? null : patch[k];
-  }
-  if (data.title !== undefined) validateDocument({ title: data.title, status: DOC_STATUS.DRAFT });
-  data.updatedAt = serverTimestamp();
-  await updateDoc(doc(col('documents'), id), data);
-}
-
-export function deleteDocument(id) { return deleteDoc(doc(col('documents'), id)); }

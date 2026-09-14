@@ -14,7 +14,7 @@ Private record-keeping dashboard for a notary business, served at
 
 ```
 .
-├── index.html                # Single-page app shell (sign-in + 4 tabs)
+├── index.html                # Single-page app shell (sign-in + 3 tabs)
 ├── css/styles.css
 ├── js/
 │   ├── app.js                # Boot, auth state, tab routing
@@ -23,11 +23,12 @@ Private record-keeping dashboard for a notary business, served at
 │   ├── auth.js               # Sign in / up / out, Google, password reset
 │   ├── db.js                 # All Firestore reads/writes
 │   ├── store.js              # In-memory cache + change notifications
-│   ├── constants.js          # Act types, ID methods, statuses, transitions
+│   ├── constants.js          # Act types, ID methods, credential types
 │   ├── validators.js         # Client-side mirror of the rules
 │   ├── csv.js                # Journal export
 │   ├── dom.js                # Tiny DOM/format helpers
-│   └── views/                # overview, journal, documents, profile
+│   ├── signature-pad.js      # Canvas signature capture
+│   └── views/                # overview, journal, profile
 ├── firestore.rules           # Security rules = database hooks
 ├── firestore.indexes.json
 ├── firebase.json / .firebaserc
@@ -81,19 +82,6 @@ Status (`valid` / `expiring` within 60 days / `expired`) is derived on read.
 
 After creation only notes, contact details, and the void flag can change.
 Deletes are refused by the rules.
-
-### `users/{uid}/documents/{id}` — Draft → Pending Signature → Completed
-
-| Field | Type | Notes |
-| --- | --- | --- |
-| `title` | string | Required |
-| `status` | enum | Transitions enforced in rules and UI |
-| `transactionId` | string | Optional link to a journal entry |
-| `statusHistory` | array of `{status, at}` | Exactly one entry appended per change |
-| `lastStatusChange`, `completedAt` | timestamp | |
-| `clientName`, `fileUrl`, `fileName`, `notes` | string | |
-
-Completed documents are frozen: no edits, no reopening, no deletion.
 
 ## Local development
 

@@ -1,7 +1,6 @@
 import { $, h, clear, fmtDate, fmtDateTime, fmtMoney } from '../dom.js';
 import { store, onChange } from '../store.js';
 import { summarizeCredentials } from '../db.js';
-import { DOC_STATUS } from '../constants.js';
 
 const STATUS_LABEL = { none: 'No credentials', valid: 'Valid', expiring: 'Expiring soon', expired: 'Expired' };
 
@@ -15,16 +14,18 @@ export function render() {
     .filter((t) => t.actDate.toDate() >= yearStart)
     .reduce((sum, t) => sum + (Number(t.fee) || 0), 0);
   const cred = summarizeCredentials(store.credentials);
-  const count = (s) => store.documents.filter((d) => d.status === s).length;
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const thisMonth = live.filter((t) => t.actDate.toDate() >= monthStart);
+  const feesMonth = thisMonth.reduce((sum, t) => sum + (Number(t.fee) || 0), 0);
+  const withSignature = live.filter((t) => t.signature).length;
 
   tiles.append(
     tile('Credentials', h('span', { class: `badge badge-${cred.status}` }, STATUS_LABEL[cred.status]),
       cred.nextExpiry ? `Next expiry ${fmtDate(cred.nextExpiry)}` : 'Add credentials in Profile'),
     tile('Journal entries', live.length, `${store.transactions.length - live.length} voided`),
     tile('Fees this year', fmtMoney(feesYtd), `${live.filter((t) => t.actDate.toDate() >= yearStart).length} acts`),
-    tile('Draft', count(DOC_STATUS.DRAFT), 'documents'),
-    tile('Pending signature', count(DOC_STATUS.PENDING), 'documents'),
-    tile('Completed', count(DOC_STATUS.COMPLETED), 'documents'),
+    tile('This month', thisMonth.length, `${fmtMoney(feesMonth)} in fees`),
+    tile('Signatures on file', withSignature, `of ${live.length} entries`),
   );
 
   const body = clear($('#ov-recent tbody'));

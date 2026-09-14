@@ -6,14 +6,12 @@ export const store = {
   profile: null,
   credentials: [],
   transactions: [],
-  documents: [],
 };
 
 const loaders = {
   profile: async () => { store.profile = await dbApi.getProfile(); },
   credentials: async () => { store.credentials = await dbApi.listCredentials(); },
   transactions: async () => { store.transactions = await dbApi.listTransactions(); },
-  documents: async () => { store.documents = await dbApi.listDocuments(); },
 };
 
 const listeners = new Set();
@@ -28,5 +26,4 @@ export function reset() {
   store.profile = null;
   store.credentials = [];
   store.transactions = [];
-  store.documents = [];
 }

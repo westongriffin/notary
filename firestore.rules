@@ -7,7 +7,6 @@ rules_version = '2';
 //   users/{uid}                          profile + entry-number counter
 //   users/{uid}/credentials/{credId}     credential document METADATA
 //   users/{uid}/transactions/{txId}      append-only notarial journal
-//   users/{uid}/documents/{docId}        Draft -> Pending Signature -> Completed
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -35,7 +34,6 @@ service cloud.firestore {
       return ['Government-Issued Photo ID', 'Personally Known', 'Credible Witness', 'Other'];
     }
     function credentialTypes() { return ['commission', 'bond', 'insurance', 'training', 'other']; }
-    function docStatuses() { return ['Draft', 'Pending Signature', 'Completed']; }
 
     // Everything not matched below is denied.
     match /{document=**} { allow read, write: if false; }
@@ -132,51 +130,6 @@ service cloud.firestore {
           && (existing().voided == false || incoming().voided == true)
           && (incoming().voided == existing().voided || str(incoming().voidReason, 500));
         allow delete: if false;
-      }
-
-      // ─────────────────── documents (status workflow) ───────────
-      match /documents/{docId} {
-        function validDocument(d) {
-          return d.keys().hasOnly(['title', 'status', 'transactionId', 'clientName',
-                                   'fileUrl', 'fileName', 'notes', 'statusHistory',
-                                   'lastStatusChange', 'completedAt', 'createdAt', 'updatedAt'])
-            && str(d.title, 300)
-            && d.status in docStatuses()
-            && d.statusHistory is list
-            && d.statusHistory.size() >= 1 && d.statusHistory.size() <= 200
-            && d.lastStatusChange is timestamp
-            && d.createdAt is timestamp
-            && optTs(d, 'updatedAt')
-            && (d.status == 'Completed'
-                  ? d.completedAt is timestamp
-                  : (!('completedAt' in d) || d.completedAt == null))
-            && optStr(d, 'transactionId', 128)
-            && optStr(d, 'clientName', 200)
-            && optStr(d, 'fileUrl', 2000)
-            && optStr(d, 'fileName', 255)
-            && optStr(d, 'notes', 4000);
-        }
-        function validTransition(from, to) {
-          return from == to
-            || (from == 'Draft' && to in ['Pending Signature', 'Completed'])
-            || (from == 'Pending Signature' && to in ['Draft', 'Completed']);
-        }
-
-        allow read: if isOwner(uid);
-        allow create: if isOwner(uid) && validDocument(incoming())
-          && incoming().statusHistory.size() == 1
-          && incoming().statusHistory[0].status == incoming().status;
-        // Completed documents are frozen. Status changes must follow the
-        // allowed transitions and append exactly one history entry.
-        allow update: if isOwner(uid) && validDocument(incoming())
-          && existing().status != 'Completed'
-          && incoming().createdAt == existing().createdAt
-          && validTransition(existing().status, incoming().status)
-          && (incoming().status == existing().status
-                ? incoming().statusHistory == existing().statusHistory
-                : (incoming().statusHistory.size() == existing().statusHistory.size() + 1
-                   && incoming().statusHistory[incoming().statusHistory.size() - 1].status == incoming().status));
-        allow delete: if isOwner(uid) && existing().status != 'Completed';
       }
     }
   }
