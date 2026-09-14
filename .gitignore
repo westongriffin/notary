@@ -1,15 +1,9 @@
-# Wix CLI generated types and local state
-.wix/
-
-# Dependencies
-node_modules/
-
-# OS / editor
 .DS_Store
-.vscode/
-.idea/
-
-# Local env and secrets (never commit these; use Wix Secrets Manager)
+node_modules/
+firebase-debug.log
+firebase-debug.*.log
+.firebase/
+*.local
 .env
 .env.*
-*.local
+.claude/

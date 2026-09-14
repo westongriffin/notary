@@ -1,0 +1,173 @@
+rules_version = '2';
+
+// Firestore security rules double as the database "hooks" for this app:
+// every write is validated here regardless of what the client sends.
+//
+// Layout (all data is per-user, keyed by Firebase Auth uid):
+//   users/{uid}                          profile + entry-number counter
+//   users/{uid}/credentials/{credId}     credential document METADATA
+//   users/{uid}/transactions/{txId}      append-only notarial journal
+//   users/{uid}/documents/{docId}        Draft -> Pending Signature -> Completed
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ───────────────────────── helpers ─────────────────────────
+    function signedIn() { return request.auth != null; }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function str(v, max) { return v is string && v.size() > 0 && v.size() <= max; }
+    function optStr(d, k, max) {
+      return !(k in d) || d[k] == null || (d[k] is string && d[k].size() <= max);
+    }
+    function optTs(d, k) { return !(k in d) || d[k] == null || d[k] is timestamp; }
+    function changedOnly(keys) {
+      return incoming().diff(existing()).affectedKeys().hasOnly(keys);
+    }
+
+    function actTypes() {
+      return ['Acknowledgment', 'Jurat', 'Oath or Affirmation',
+              'Copy Certification', 'Signature Witnessing', 'Other'];
+    }
+    function idMethods() {
+      return ['Government-Issued Photo ID', 'Personally Known', 'Credible Witness', 'Other'];
+    }
+    function credentialTypes() { return ['commission', 'bond', 'insurance', 'training', 'other']; }
+    function docStatuses() { return ['Draft', 'Pending Signature', 'Completed']; }
+
+    // Everything not matched below is denied.
+    match /{document=**} { allow read, write: if false; }
+
+    // ───────────────────────── users/{uid} ─────────────────────
+    match /users/{uid} {
+      function validProfile(d) {
+        return d.keys().hasOnly(['displayName', 'businessName', 'email', 'phone',
+                                 'commissionState', 'commissionNumber',
+                                 'nextEntryNumber', 'createdAt', 'updatedAt'])
+          && d.nextEntryNumber is int && d.nextEntryNumber >= 1
+          && d.createdAt is timestamp
+          && optTs(d, 'updatedAt')
+          && optStr(d, 'displayName', 200)
+          && optStr(d, 'businessName', 200)
+          && optStr(d, 'email', 254)
+          && optStr(d, 'phone', 40)
+          && optStr(d, 'commissionState', 60)
+          && optStr(d, 'commissionNumber', 60);
+      }
+
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && validProfile(incoming()) && incoming().nextEntryNumber == 1;
+      // The counter may only stay put or advance by exactly one (journal insert).
+      allow update: if isOwner(uid) && validProfile(incoming())
+        && incoming().createdAt == existing().createdAt
+        && (incoming().nextEntryNumber == existing().nextEntryNumber
+            || incoming().nextEntryNumber == existing().nextEntryNumber + 1);
+      allow delete: if false;
+
+      // ─────────────────── credentials (metadata only) ───────────
+      match /credentials/{credId} {
+        function validCredential(d) {
+          return d.keys().hasOnly(['type', 'label', 'fileUrl', 'fileName',
+                                   'uploadedAt', 'expiresAt', 'notes', 'createdAt'])
+            && d.type in credentialTypes()
+            && str(d.label, 200)
+            && d.uploadedAt is timestamp
+            && d.expiresAt is timestamp
+            && d.expiresAt > d.uploadedAt
+            && d.createdAt is timestamp
+            && optStr(d, 'fileUrl', 2000)
+            && optStr(d, 'fileName', 255)
+            && optStr(d, 'notes', 2000);
+        }
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && validCredential(incoming());
+        allow update: if isOwner(uid) && validCredential(incoming())
+          && incoming().createdAt == existing().createdAt;
+        allow delete: if isOwner(uid);
+      }
+
+      // ─────────────────── transactions (append-only) ────────────
+      match /transactions/{txId} {
+        function validTransaction(d) {
+          return d.keys().hasOnly(['entryNumber', 'actDate', 'actType', 'clientName',
+                                   'clientAddress', 'clientEmail', 'clientPhone',
+                                   'idMethod', 'fee', 'documentDescription', 'notes',
+                                   'voided', 'voidReason', 'createdAt', 'updatedAt'])
+            && d.entryNumber is int && d.entryNumber >= 1
+            && d.actDate is timestamp
+            && d.actDate <= request.time + duration.value(5, 'm')
+            && d.actType in actTypes()
+            && str(d.clientName, 200)
+            && str(d.clientAddress, 500)
+            && d.idMethod in idMethods()
+            && d.fee is number && d.fee >= 0 && d.fee <= 100000
+            && d.voided is bool
+            && d.createdAt is timestamp
+            && optTs(d, 'updatedAt')
+            && optStr(d, 'clientEmail', 254)
+            && optStr(d, 'clientPhone', 40)
+            && optStr(d, 'documentDescription', 500)
+            && optStr(d, 'notes', 4000)
+            && optStr(d, 'voidReason', 500);
+        }
+
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && validTransaction(incoming()) && incoming().voided == false;
+        // Only notes, contact details and the void flag may change after insert.
+        // Voiding is one-way and requires a reason. Nothing is ever deleted.
+        allow update: if isOwner(uid) && validTransaction(incoming())
+          && changedOnly(['notes', 'clientEmail', 'clientPhone', 'voided', 'voidReason', 'updatedAt'])
+          && (existing().voided == false || incoming().voided == true)
+          && (incoming().voided == existing().voided || str(incoming().voidReason, 500));
+        allow delete: if false;
+      }
+
+      // ─────────────────── documents (status workflow) ───────────
+      match /documents/{docId} {
+        function validDocument(d) {
+          return d.keys().hasOnly(['title', 'status', 'transactionId', 'clientName',
+                                   'fileUrl', 'fileName', 'notes', 'statusHistory',
+                                   'lastStatusChange', 'completedAt', 'createdAt', 'updatedAt'])
+            && str(d.title, 300)
+            && d.status in docStatuses()
+            && d.statusHistory is list
+            && d.statusHistory.size() >= 1 && d.statusHistory.size() <= 200
+            && d.lastStatusChange is timestamp
+            && d.createdAt is timestamp
+            && optTs(d, 'updatedAt')
+            && (d.status == 'Completed'
+                  ? d.completedAt is timestamp
+                  : (!('completedAt' in d) || d.completedAt == null))
+            && optStr(d, 'transactionId', 128)
+            && optStr(d, 'clientName', 200)
+            && optStr(d, 'fileUrl', 2000)
+            && optStr(d, 'fileName', 255)
+            && optStr(d, 'notes', 4000);
+        }
+        function validTransition(from, to) {
+          return from == to
+            || (from == 'Draft' && to in ['Pending Signature', 'Completed'])
+            || (from == 'Pending Signature' && to in ['Draft', 'Completed']);
+        }
+
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && validDocument(incoming())
+          && incoming().statusHistory.size() == 1
+          && incoming().statusHistory[0].status == incoming().status;
+        // Completed documents are frozen. Status changes must follow the
+        // allowed transitions and append exactly one history entry.
+        allow update: if isOwner(uid) && validDocument(incoming())
+          && existing().status != 'Completed'
+          && incoming().createdAt == existing().createdAt
+          && validTransition(existing().status, incoming().status)
+          && (incoming().status == existing().status
+                ? incoming().statusHistory == existing().statusHistory
+                : (incoming().statusHistory.size() == existing().statusHistory.size() + 1
+                   && incoming().statusHistory[incoming().statusHistory.size() - 1].status == incoming().status));
+        allow delete: if isOwner(uid) && existing().status != 'Completed';
+      }
+    }
+  }
+}

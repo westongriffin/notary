@@ -1,6 +1,0 @@
-{
-  "root": true,
-  "extends": ["plugin:@wix/cli/recommended"],
-  "env": { "es2022": true },
-  "parserOptions": { "ecmaVersion": 2022, "sourceType": "module" }
-}
