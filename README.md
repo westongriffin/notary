@@ -1,14 +1,14 @@
 # Notary Book
 
 Private record-keeping dashboard for a notary business, served at
-**https://notary.wes-griffin.com**.
+**https://thenotarybook.com**.
 
 | Layer | Where | Notes |
 | --- | --- | --- |
 | Site (HTML/CSS/JS) | This repo → **GitHub Pages** | Static, no build step |
 | Auth + database | **Firebase** project `notary-wes-griffin` | Firebase Auth, Cloud Firestore |
 | Database hooks | [`firestore.rules`](firestore.rules) | Server-side validation and immutability |
-| DNS only | **Wix** (registrar for wes-griffin.com) | One CNAME record; nothing else on Wix |
+| DNS only | **Wix** (registrar for thenotarybook.com) | A + CNAME records; nothing else on Wix |
 
 ## Repository layout
 
@@ -35,7 +35,7 @@ Private record-keeping dashboard for a notary business, served at
 ├── firestore.rules           # Security rules = database hooks
 ├── firestore.indexes.json
 ├── firebase.json / .firebaserc
-├── CNAME                     # notary.wes-griffin.com (GitHub Pages custom domain)
+├── CNAME                     # thenotarybook.com (GitHub Pages custom domain)
 ├── .nojekyll                 # Serve files as-is
 ├── robots.txt                # Disallow indexing (private tool)
 ├── .github/workflows/ci.yml  # Syntax checks; optional rules deploy

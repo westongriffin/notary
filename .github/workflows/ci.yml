@@ -20,7 +20,7 @@ jobs:
         run: |
           node -e "for (const f of ['firebase.json','firestore.indexes.json','.firebaserc']) JSON.parse(require('fs').readFileSync(f,'utf8'))"
       - name: Confirm Pages custom-domain files
-        run: test "$(cat CNAME)" = "notary.wes-griffin.com" && test -f .nojekyll
+        run: test "$(cat CNAME)" = "thenotarybook.com" && test -f .nojekyll
 
   # Deploys Firestore rules when a FIREBASE_SERVICE_ACCOUNT secret is configured.
   # See docs/FIREBASE_SETUP.md. Skipped silently otherwise.

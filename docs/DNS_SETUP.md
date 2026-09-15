@@ -1,48 +1,59 @@
-# DNS: pointing notary.wes-griffin.com at GitHub Pages
+# DNS: pointing thenotarybook.com at GitHub Pages
 
-Wix is the registrar and DNS host for `wes-griffin.com` (nameservers
-`ns12.wixdns.net` / `ns13.wixdns.net`). That is the only thing Wix does for
-this project. The site itself is served by GitHub Pages.
+`thenotarybook.com` is registered at Wix and uses Wix nameservers
+(`ns12.wixdns.net` / `ns13.wixdns.net`). Wix only hosts the DNS records; the
+site is served by GitHub Pages.
 
-## 1. GitHub side
+## GitHub side
 
 Repository **westongriffin/notary** → Settings → Pages:
 
 - Source: **Deploy from a branch**, branch `main`, folder `/ (root)`.
-- Custom domain: `notary.wes-griffin.com` (the `CNAME` file in the repo sets this too).
-- Enforce HTTPS: on (available once the DNS record below resolves).
+- Custom domain: `thenotarybook.com` (the `CNAME` file in the repo sets this too).
+- Enforce HTTPS: on, once the certificate is issued.
 
-GitHub Pages on a free account requires the repository to be **public**.
+With the apex as the custom domain, GitHub also serves `www.thenotarybook.com`
+and redirects it to the apex.
 
-## 2. Wix side (the only Wix step)
+## Wix side (Domains → thenotarybook.com → ⋯ → Manage DNS Records)
 
-Wix dashboard → account menu → **Domains** → `wes-griffin.com` → **⋯** →
-**Manage DNS Records** → under **CNAME (Aliases)** click **Add Record**:
+Replace Wix's default records with these:
 
-| Host name | Value | TTL |
+| Type | Host name | Value |
 | --- | --- | --- |
-| `notary` | `westongriffin.github.io` | 1 hour (default) |
+| A | `thenotarybook.com` | `185.199.108.153` |
+| A | `thenotarybook.com` | `185.199.109.153` |
+| A | `thenotarybook.com` | `185.199.110.153` |
+| A | `thenotarybook.com` | `185.199.111.153` |
+| CNAME | `www` | `westongriffin.github.io` |
 
-Save. Do not add an A record for the subdomain, and leave the root domain's
-existing records alone.
+Delete the Wix parking A records (`185.230.63.x`) and the `www` CNAME to
+`*.wixdns.net`; leave any TXT/MX records alone.
 
-## 3. Verify
+## Verify
 
 ```bash
-dig +short CNAME notary.wes-griffin.com
+dig +short A thenotarybook.com
+dig +short CNAME www.thenotarybook.com
 ```
 
-Expected: `westongriffin.github.io.` Then GitHub's Pages settings page shows
-"DNS check successful" and issues a certificate, usually within an hour.
+Expected: the four GitHub IPs, and `westongriffin.github.io.`
 
 ```bash
-curl -sI https://notary.wes-griffin.com | head -3
+curl -sI https://thenotarybook.com | head -3
 ```
 
 Expected: `HTTP/2 200`.
 
-## 4. Firebase authorized domain
+## Firebase authorized domains
 
-Sign-in only works from domains Firebase trusts. Add
-`notary.wes-griffin.com` under Firebase Console → Authentication → Settings →
-**Authorized domains**. See `FIREBASE_SETUP.md`.
+Sign-in only works from domains Firebase trusts. `thenotarybook.com` and
+`www.thenotarybook.com` are listed under Firebase Console → Authentication →
+Settings → Authorized domains.
+
+## Previous address
+
+`notary.wes-griffin.com` still has a CNAME to GitHub, but GitHub Pages serves
+one custom domain per site, so that hostname now returns GitHub's 404 page.
+Remove that record in Wix (wes-griffin.com → Manage DNS Records) when you no
+longer want it to resolve.

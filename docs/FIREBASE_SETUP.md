@@ -8,7 +8,7 @@ Console: https://console.firebase.google.com/project/notary-wes-griffin
    - Enable **Email/Password**.
    - Enable **Google** (optional, powers the "Continue with Google" button).
 2. **Authentication → Settings → Authorized domains**
-   - Add `notary.wes-griffin.com`.
+   - Add `thenotarybook.com`.
    - `localhost` and `notary-wes-griffin.firebaseapp.com` are there by default.
 3. **Firestore Database** — already created in `nam5` (US multi-region).
 
