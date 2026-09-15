@@ -1,7 +1,11 @@
 import { $, h, clear, fillSelect, formData, setBusy, toast, fmtDate, confirmDialog } from '../dom.js';
 import { store, reload, onChange } from '../store.js';
-import { saveProfile, addCredential, removeCredential, credentialStatus } from '../db.js';
+import {
+  saveProfile, addCredential, removeCredential, credentialStatus,
+  saveCommissionImage, removeCommissionImage,
+} from '../db.js';
 import { CREDENTIAL_TYPES } from '../constants.js';
+import { fileToJpegDataUrl } from '../image.js';
 
 const STATUS_LABEL = { valid: 'Valid', expiring: 'Expiring soon', expired: 'Expired' };
 
@@ -15,7 +19,63 @@ export function init() {
   cf.addEventListener('submit', onCredentialSubmit);
   cf.addEventListener('reset', () => setTimeout(() => { cf.uploadedAt.value = new Date().toISOString().slice(0, 10); }));
 
+  $('#commission-file').addEventListener('change', onCommissionPicked);
+  $('#commission-replace').addEventListener('change', onCommissionPicked);
+  $('#commission-remove').addEventListener('click', onCommissionRemove);
+  $('#commission-img').addEventListener('click', () => {
+    if (!store.commissionImage) return;
+    $('#commission-full').src = store.commissionImage.dataUrl;
+    $('#commission-dialog').showModal();
+  });
+
   onChange((keys) => { if (!$('#tab-profile').hidden) render(); });
+}
+
+function renderCommission() {
+  const img = store.commissionImage;
+  $('#commission-empty').hidden = Boolean(img);
+  $('#commission-view').hidden = !img;
+  if (img) {
+    $('#commission-img').src = img.dataUrl;
+    const parts = [];
+    if (img.fileName) parts.push(img.fileName);
+    if (img.width && img.height) parts.push(`${img.width}×${img.height}`);
+    if (img.uploadedAt) parts.push(`uploaded ${fmtDate(img.uploadedAt)}`);
+    $('#commission-meta').textContent = parts.join(' · ');
+  }
+}
+
+function commissionStatus(msg) { const el = $('#commission-status'); el.textContent = msg; el.hidden = !msg; }
+
+async function onCommissionPicked(e) {
+  const input = e.currentTarget;
+  const file = input.files && input.files[0];
+  input.value = ''; // allow re-picking the same file later
+  if (!file) return;
+  showError('#commission-error', '');
+  commissionStatus('Preparing image…');
+  try {
+    const prepared = await fileToJpegDataUrl(file);
+    commissionStatus('Uploading…');
+    await saveCommissionImage({ ...prepared, fileName: file.name });
+    toast('Commission image saved.', 'success');
+    await reload(['commissionImage']);
+  } catch (err) {
+    showError('#commission-error', err.message);
+  } finally {
+    commissionStatus('');
+  }
+}
+
+async function onCommissionRemove() {
+  if (!(await confirmDialog('Remove the commission image?'))) return;
+  try {
+    await removeCommissionImage();
+    toast('Commission image removed.', 'success');
+    await reload(['commissionImage']);
+  } catch (err) {
+    showError('#commission-error', err.message);
+  }
 }
 
 export function render() {
@@ -24,6 +84,8 @@ export function render() {
   for (const k of ['displayName', 'businessName', 'email', 'phone', 'commissionState', 'commissionNumber']) {
     if (document.activeElement !== pf[k]) pf[k].value = p[k] || '';
   }
+
+  renderCommission();
 
   const body = clear($('#cred-table tbody'));
   $('#cred-empty').hidden = store.credentials.length > 0;

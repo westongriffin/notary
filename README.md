@@ -28,6 +28,7 @@ Private record-keeping dashboard for a notary business, served at
 │   ├── csv.js                # Journal export
 │   ├── dom.js                # Tiny DOM/format helpers
 │   ├── signature-pad.js      # Canvas signature capture
+│   ├── image.js              # Shrinks uploaded images to JPEG data URLs
 │   └── views/                # overview, journal, profile
 ├── firestore.rules           # Security rules = database hooks
 ├── firestore.indexes.json
@@ -54,6 +55,14 @@ or write their own records. Field validation lives in `firestore.rules`.
 | `commissionState`, `commissionNumber` | string | |
 | `nextEntryNumber` | int | Journal counter; rules allow it to advance by exactly 1 |
 | `createdAt`, `updatedAt` | timestamp | |
+
+### `users/{uid}/media/commission` — commission certificate image
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `dataUrl` | string | JPEG data URL, shrunk client-side to ≤ 900k chars (Firebase Storage needs the Blaze plan) |
+| `width`, `height` | int | Stored dimensions |
+| `fileName`, `contentType`, `uploadedAt` | string, string, timestamp | |
 
 ### `users/{uid}/credentials/{id}` — credential document metadata
 

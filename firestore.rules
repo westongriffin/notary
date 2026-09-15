@@ -5,6 +5,7 @@ rules_version = '2';
 //
 // Layout (all data is per-user, keyed by Firebase Auth uid):
 //   users/{uid}                          profile + entry-number counter
+//   users/{uid}/media/commission         commission image as a JPEG data URL
 //   users/{uid}/credentials/{credId}     credential document METADATA
 //   users/{uid}/transactions/{txId}      append-only notarial journal
 
@@ -63,6 +64,26 @@ service cloud.firestore {
         && (incoming().nextEntryNumber == existing().nextEntryNumber
             || incoming().nextEntryNumber == existing().nextEntryNumber + 1);
       allow delete: if false;
+
+      // ─────────────────── media (commission image) ──────────────
+      // Firebase Storage needs the Blaze plan, so the image lives here as a
+      // client-shrunk JPEG data URL, capped well under the 1 MiB doc limit.
+      match /media/{mediaId} {
+        function validMedia(d) {
+          return d.keys().hasOnly(['dataUrl', 'width', 'height', 'fileName', 'contentType', 'uploadedAt'])
+            && d.dataUrl is string
+            && d.dataUrl.size() <= 950000
+            && d.dataUrl.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
+            && d.contentType == 'image/jpeg'
+            && d.width is int && d.width > 0 && d.width <= 10000
+            && d.height is int && d.height > 0 && d.height <= 10000
+            && d.uploadedAt is timestamp
+            && optStr(d, 'fileName', 255);
+        }
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && mediaId == 'commission' && validMedia(incoming());
+        allow delete: if isOwner(uid);
+      }
 
       // ─────────────────── credentials (metadata only) ───────────
       match /credentials/{credId} {

@@ -4,12 +4,14 @@ import * as dbApi from './db.js';
 
 export const store = {
   profile: null,
+  commissionImage: null,
   credentials: [],
   transactions: [],
 };
 
 const loaders = {
   profile: async () => { store.profile = await dbApi.getProfile(); },
+  commissionImage: async () => { store.commissionImage = await dbApi.getCommissionImage(); },
   credentials: async () => { store.credentials = await dbApi.listCredentials(); },
   transactions: async () => { store.transactions = await dbApi.listTransactions(); },
 };
@@ -24,6 +26,7 @@ export async function reload(keys = Object.keys(loaders)) {
 
 export function reset() {
   store.profile = null;
+  store.commissionImage = null;
   store.credentials = [];
   store.transactions = [];
 }

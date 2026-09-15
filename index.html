@@ -134,6 +134,28 @@
         </div>
 
         <div class="card">
+          <div class="card-head"><h2>Commission</h2></div>
+          <p class="muted small">Upload a photo or scan of your commission certificate. It is stored privately with your profile and shown here.</p>
+          <div id="commission-empty">
+            <label class="btn btn-primary upload-btn">Upload commission image
+              <input id="commission-file" type="file" accept="image/*" hidden>
+            </label>
+          </div>
+          <div id="commission-view" hidden>
+            <img id="commission-img" class="commission-img" alt="Commission certificate" title="Click to enlarge">
+            <p id="commission-meta" class="muted small"></p>
+            <div class="actions">
+              <label class="btn btn-ghost btn-sm upload-btn">Replace
+                <input id="commission-replace" type="file" accept="image/*" hidden>
+              </label>
+              <button id="commission-remove" class="btn btn-ghost btn-sm" type="button">Remove</button>
+            </div>
+          </div>
+          <p id="commission-status" class="muted small" hidden></p>
+          <p id="commission-error" class="error" hidden></p>
+        </div>
+
+        <div class="card">
           <div class="card-head"><h2>Credentials</h2></div>
           <p class="muted small">Track expiration dates for your commission, bond, insurance, and training. Only metadata is stored here; keep the files in your own secure storage and paste a link if you like.</p>
           <form id="cred-form" class="grid-form" novalidate>
@@ -184,6 +206,14 @@
         <button class="btn btn-primary" value="confirm" type="submit">Save</button>
         <button class="btn btn-ghost" value="cancel" type="button" data-close>Cancel</button>
       </div>
+    </form>
+  </dialog>
+
+  <dialog id="commission-dialog" class="dialog-wide">
+    <form method="dialog">
+      <h3>Commission certificate</h3>
+      <img id="commission-full" class="commission-full" alt="Commission certificate">
+      <div class="actions"><button class="btn btn-ghost" type="button" data-close>Close</button></div>
     </form>
   </dialog>
 

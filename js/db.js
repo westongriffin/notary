@@ -48,6 +48,33 @@ export async function saveProfile(patch) {
   await updateDoc(profileRef(), data);
 }
 
+/* ───────────────────────── commission image ──────────────────────── */
+
+const COMMISSION_DOC = 'commission';
+const mediaRef = () => doc(col('media'), COMMISSION_DOC);
+
+export async function getCommissionImage() {
+  const snap = await getDoc(mediaRef());
+  return snap.exists() ? withId(snap) : null;
+}
+
+/** Stores the prepared JPEG data URL (see js/image.js). Replaces any existing image. */
+export async function saveCommissionImage({ dataUrl, width, height, fileName }) {
+  if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/jpeg;base64,')) {
+    throw new Error('Image must be a JPEG data URL.');
+  }
+  await setDoc(mediaRef(), strip({
+    dataUrl,
+    width,
+    height,
+    fileName: fileName ? String(fileName).slice(0, 255) : undefined,
+    contentType: 'image/jpeg',
+    uploadedAt: serverTimestamp(),
+  }));
+}
+
+export function removeCommissionImage() { return deleteDoc(mediaRef()); }
+
 /* ─────────────────────────── credentials ─────────────────────────── */
 
 export async function listCredentials() {
