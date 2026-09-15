@@ -9,6 +9,8 @@ export class SignaturePad {
     this.color = color;
     this.strokes = [];
     this.current = null;
+    this.image = null;      // imported signature (HTMLImageElement)
+    this.imageUrl = null;   // its original data URL
 
     canvas.style.touchAction = 'none';
     canvas.addEventListener('pointerdown', (e) => this.#down(e));
@@ -30,12 +32,23 @@ export class SignaturePad {
     this.#redraw();
   }
 
-  clear() { this.strokes = []; this.current = null; this.#redraw(); }
-  isEmpty() { return this.strokes.length === 0; }
+  clear() { this.strokes = []; this.current = null; this.image = null; this.imageUrl = null; this.#redraw(); }
+  isEmpty() { return this.strokes.length === 0 && !this.image; }
+
+  /** Show a previously captured signature (PNG data URL), e.g. one a client sent in. */
+  setImage(dataUrl) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => { this.strokes = []; this.current = null; this.image = img; this.imageUrl = dataUrl; this.#redraw(); resolve(); };
+      img.onerror = () => reject(new Error('Could not load signature image'));
+      img.src = dataUrl;
+    });
+  }
 
   /** PNG data URL, or null when nothing was drawn. */
   toDataURL() {
     if (this.isEmpty()) return null;
+    if (this.strokes.length === 0 && this.imageUrl) return this.imageUrl;
     // Export at a fixed, modest size so the stored string stays small.
     const out = document.createElement('canvas');
     out.width = 600; out.height = 200;
@@ -76,6 +89,12 @@ export class SignaturePad {
     this.#paint(this.ctx);
   }
   #paint(ctx) {
+    if (this.image) {
+      const { width, height } = this.canvas.getBoundingClientRect();
+      const s = Math.min(width / this.image.width, height / this.image.height, 1);
+      const w = this.image.width * s, hgt = this.image.height * s;
+      ctx.drawImage(this.image, (width - w) / 2, (height - hgt) / 2, w, hgt);
+    }
     ctx.lineWidth = this.lineWidth;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';

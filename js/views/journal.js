@@ -5,6 +5,7 @@ import { ACT_TYPES, ID_METHODS } from '../constants.js';
 import { money } from '../validators.js';
 import { transactionsToCsv, downloadText } from '../csv.js';
 import { SignaturePad } from '../signature-pad.js';
+import { initIntakePanel, currentIntakeId, finishIntake, resetIntake } from './intake-panel.js';
 
 let pendingVoidId = null;
 let pendingNotesId = null;
@@ -16,8 +17,9 @@ export function init() {
   fillSelect(form.idMethod, ID_METHODS, { placeholder: 'Select…' });
   form.actDate.value = toLocalInputValue();
   form.addEventListener('submit', onSubmit);
-  form.addEventListener('reset', () => setTimeout(() => { form.actDate.value = toLocalInputValue(); showError(''); signaturePad?.clear(); }));
+  form.addEventListener('reset', () => setTimeout(() => { form.actDate.value = toLocalInputValue(); showError(''); signaturePad?.clear(); resetIntake(); }));
   signaturePad = new SignaturePad($('#tx-signature'));
+  initIntakePanel({ form, signaturePad });
   $('#tx-sig-clear').addEventListener('click', () => signaturePad.clear());
 
   ['#tx-from', '#tx-to', '#tx-search', '#tx-include-voided'].forEach((sel) => $(sel).addEventListener('input', render));
@@ -49,8 +51,10 @@ async function onSubmit(e) {
       documentDescription: d.documentDescription,
       notes: d.notes,
       signature: signaturePad.toDataURL(),
+      intakeId: currentIntakeId(),
     });
     toast(`Entry #${entryNumber} added.`, 'success');
+    await finishIntake();
     form.reset();
     await reload(['transactions', 'profile']);
   } catch (err) {

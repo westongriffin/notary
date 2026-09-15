@@ -36,8 +36,59 @@ service cloud.firestore {
     }
     function credentialTypes() { return ['commission', 'bond', 'insurance', 'training', 'other']; }
 
+    // Optional signature: a PNG data URL from the on-screen signature pad.
+    function validSignature(d) {
+      return !('signature' in d) || d.signature == null
+        || (d.signature is string
+            && d.signature.size() <= 300000
+            && d.signature.matches('^data:image/png;base64,[A-Za-z0-9+/=]+$'));
+    }
+
     // Everything not matched below is denied.
     match /{document=**} { allow read, write: if false; }
+
+    // ───────────────────────── intakes/{token} ─────────────────────
+    // Client intake links. The notary creates a request; the client, who is
+    // not signed in, opens intake.html#<token> and submits once. The 40-hex
+    // token is unguessable and is the only credential. No listing for the
+    // public; reads by exact id only.
+    match /intakes/{token} {
+      function isIntakeOwner() { return signedIn() && existing().ownerUid == request.auth.uid; }
+      function live() { return existing().status == 'pending' && existing().expiresAt > request.time; }
+      function validIntakeCreate(d) {
+        return d.keys().hasOnly(['ownerUid', 'notaryName', 'status', 'createdAt', 'expiresAt'])
+          && d.ownerUid == request.auth.uid
+          && d.status == 'pending'
+          && d.createdAt is timestamp
+          && d.expiresAt is timestamp
+          && d.expiresAt <= request.time + duration.value(31, 'd')
+          && optStr(d, 'notaryName', 200);
+      }
+      function validClientSubmit(d) {
+        return d.status == 'submitted'
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+               'status', 'submittedAt', 'clientName', 'clientAddress',
+               'documentDescription', 'clientEmail', 'clientPhone', 'signature'])
+          && d.submittedAt is timestamp
+          && str(d.clientName, 200)
+          && str(d.clientAddress, 500)
+          && optStr(d, 'documentDescription', 500)
+          && optStr(d, 'clientEmail', 254)
+          && optStr(d, 'clientPhone', 40)
+          && validSignature(d);
+      }
+
+      allow get: if true;
+      allow list: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      allow create: if signedIn() && token.size() == 40 && validIntakeCreate(incoming());
+      // Either the client submits (once, while the link is live) or the owner
+      // closes the request. Nothing else changes.
+      allow update: if (live() && validClientSubmit(incoming()))
+        || (isIntakeOwner()
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+            && incoming().status in ['used', 'cancelled']);
+      allow delete: if isIntakeOwner();
+    }
 
     // ───────────────────────── users/{uid} ─────────────────────
     match /users/{uid} {
@@ -113,7 +164,7 @@ service cloud.firestore {
           return d.keys().hasOnly(['entryNumber', 'actDate', 'actType', 'clientName',
                                    'clientAddress', 'clientEmail', 'clientPhone',
                                    'idMethod', 'fee', 'documentDescription', 'notes',
-                                   'signature', 'voided', 'voidReason', 'createdAt', 'updatedAt'])
+                                   'signature', 'intakeId', 'voided', 'voidReason', 'createdAt', 'updatedAt'])
             && d.entryNumber is int && d.entryNumber >= 1
             && d.actDate is timestamp
             && d.actDate <= request.time + duration.value(5, 'm')
@@ -130,16 +181,8 @@ service cloud.firestore {
             && optStr(d, 'documentDescription', 500)
             && optStr(d, 'notes', 4000)
             && optStr(d, 'voidReason', 500)
+            && optStr(d, 'intakeId', 64)
             && validSignature(d);
-        }
-        // Optional signer signature: a PNG data URL from the signature pad.
-        // It is part of the record and, like the other core fields, cannot
-        // be changed after insert (it is not in the mutable list below).
-        function validSignature(d) {
-          return !('signature' in d) || d.signature == null
-            || (d.signature is string
-                && d.signature.size() <= 300000
-                && d.signature.matches('^data:image/png;base64,[A-Za-z0-9+/=]+$'));
         }
 
         allow read: if isOwner(uid);

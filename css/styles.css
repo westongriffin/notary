@@ -238,6 +238,19 @@ form + .table-wrap, .card > p + .table-wrap { margin-top: var(--gap); }
 .badge-none { background: var(--neutral); }
 .badge-voided { background: var(--danger); }
 
+/* ── Client intake panel & page ─────────────────────────────────────── */
+.intake-panel { border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.intake-panel > div { display: flex; flex-direction: column; gap: 10px; }
+.intake-panel p { margin: 2px 0 0; }
+.intake-row { display: flex; flex-direction: column; gap: 10px; }
+.intake-row > div { min-width: 0; }
+.link-box { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow-wrap: anywhere; user-select: all; -webkit-user-select: all; }
+.pulse { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--warn); margin-right: 4px; vertical-align: middle; animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+main.intake { max-width: 560px; }
+main.intake form { display: flex; flex-direction: column; gap: var(--gap); margin-top: 12px; }
+main.intake h1 { margin-bottom: 6px; }
+
 /* ── Signature pad ──────────────────────────────────────────────────── */
 .sig-field { display: flex; flex-direction: column; gap: 6px; }
 .sig-wrap { border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); background: #fff; overflow: hidden; }
@@ -297,6 +310,8 @@ dialog .actions { flex-direction: row-reverse; }
   .filters .check, .filters .btn { grid-column: auto; flex: 0 0 auto; }
   .sig-wrap { max-width: 640px; }
   .upload-btn.btn-block { width: auto; }
+  .intake-row { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  .intake-row .btn { flex: none; }
   .tabs { position: static; display: flex; gap: 4px; padding: 0; background: none; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; }
   .tabs [role="tab"] { border-radius: 0; border-bottom: 2px solid transparent; padding: 10px 16px; }
   .tabs [role="tab"][aria-selected="true"] { background: none; color: var(--primary); border-bottom-color: var(--primary); }

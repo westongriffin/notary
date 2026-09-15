@@ -71,6 +71,40 @@
         <div class="card">
           <div class="card-head"><h2>Log a notarial act</h2></div>
           <form id="tx-form" class="grid-form" novalidate>
+            <div class="span-3 intake-panel">
+              <div id="intake-idle">
+                <div class="intake-row">
+                  <div>
+                    <strong>Have the client fill in their part</strong>
+                    <p class="muted small">Send a private link. Their name, address, document, contact details, and signature appear here the moment they submit.</p>
+                  </div>
+                  <button id="intake-open" class="btn" type="button">Request client info</button>
+                </div>
+              </div>
+              <div id="intake-waiting" hidden>
+                <div class="intake-row">
+                  <div><strong><span class="pulse"></span> Waiting for the client…</strong>
+                    <p class="muted small">The link works once and expires in 7 days.</p></div>
+                  <button id="intake-cancel" class="btn btn-sm" type="button">Cancel request</button>
+                </div>
+                <div class="link-box" id="intake-url"></div>
+                <label>Client mobile number (optional, for texting)
+                  <input id="intake-phone" type="tel" inputmode="tel" autocomplete="off" placeholder="+1 817 555 0100">
+                </label>
+                <div class="actions">
+                  <a id="intake-sms" class="btn btn-primary" href="sms:">Text the link</a>
+                  <button id="intake-share" class="btn" type="button">Share…</button>
+                  <button id="intake-copy" class="btn" type="button">Copy link</button>
+                </div>
+              </div>
+              <div id="intake-received" hidden>
+                <div class="intake-row">
+                  <div><strong>Client details received</strong>
+                    <p id="intake-received-text" class="muted small"></p></div>
+                  <button id="intake-dismiss" class="btn btn-sm" type="button">Hide</button>
+                </div>
+              </div>
+            </div>
             <label>Date &amp; time <input name="actDate" type="datetime-local" required></label>
             <label>Act type <select name="actType" required></select></label>
             <label>Client name <input name="clientName" required maxlength="200" autocomplete="off"></label>

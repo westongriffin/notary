@@ -15,6 +15,7 @@ Private record-keeping dashboard for a notary business, served at
 ```
 .
 ├── index.html                # Single-page app shell (sign-in + 3 tabs)
+├── intake.html               # Client intake page, opened from a texted link
 ├── css/styles.css
 ├── js/
 │   ├── app.js                # Boot, auth state, tab routing
@@ -29,7 +30,8 @@ Private record-keeping dashboard for a notary business, served at
 │   ├── dom.js                # Tiny DOM/format helpers
 │   ├── signature-pad.js      # Canvas signature capture
 │   ├── image.js              # Shrinks uploaded images to JPEG data URLs
-│   └── views/                # overview, journal, profile
+│   ├── intake.js             # Client-facing intake page logic (no sign-in)
+│   └── views/                # overview, journal, profile, intake-panel
 ├── firestore.rules           # Security rules = database hooks
 ├── firestore.indexes.json
 ├── firebase.json / .firebaserc
@@ -91,6 +93,24 @@ Status (`valid` / `expiring` within 60 days / `expired`) is derived on read.
 
 After creation only notes, contact details, and the void flag can change.
 Deletes are refused by the rules.
+
+## Client intake links
+
+From the Journal form, **Request client info** creates a one-time link
+(`intake.html#<40-hex token>`) and offers to text, share, or copy it. The
+client opens it on their phone with no sign-in, enters name, address,
+document, email, phone, and signs. The notary's form is listening via a
+Firestore snapshot and fills itself the moment the client submits; the notary
+adds act type, ID method, fee, and saves. Saving marks the request `used`.
+
+| Field on `intakes/{token}` | Set by | Notes |
+| --- | --- | --- |
+| `ownerUid`, `notaryName`, `status: pending`, `createdAt`, `expiresAt` | notary | Expires after 7 days |
+| `clientName`, `clientAddress`, `documentDescription`, `clientEmail`, `clientPhone`, `signature`, `submittedAt`, `status: submitted` | client | Exactly one submit while pending and unexpired |
+| `status: used` / `cancelled` | notary | Closes the link |
+
+The token is the only credential: the rules allow `get` by exact id, never a
+list, and the client can only change the fields above on a pending record.
 
 ## Local development
 

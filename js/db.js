@@ -2,7 +2,7 @@
 // enforces ownership and validation on the server no matter what happens here.
 import {
   db, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
-  query, orderBy, limit, runTransaction, serverTimestamp, Timestamp,
+  query, orderBy, limit, runTransaction, serverTimestamp, Timestamp, onSnapshot,
 } from './firebase.js';
 import { currentUser } from './auth.js';
 import { CREDENTIAL_STATUS, CREDENTIAL_EXPIRING_WINDOW_DAYS } from './constants.js';
@@ -46,6 +46,49 @@ export async function saveProfile(patch) {
   for (const k of allowed) data[k] = patch[k] === undefined ? null : String(patch[k]).trim();
   data.updatedAt = serverTimestamp();
   await updateDoc(profileRef(), data);
+}
+
+/* ─────────────────────────── client intake links ─────────────────────
+   A request lives at intakes/{token}. The token is the only secret: whoever
+   holds the link can fill in that one record once. See firestore.rules.   */
+
+export const INTAKE_TTL_DAYS = 7;
+
+function newIntakeToken() {
+  const bytes = new Uint8Array(20);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+export function intakeUrl(id) {
+  const base = `${location.origin}${location.pathname.replace(/[^/]*$/, '')}`;
+  return `${base}intake.html#${id}`;
+}
+
+export async function createIntake({ notaryName } = {}) {
+  const id = newIntakeToken();
+  const expiresAt = Timestamp.fromDate(new Date(Date.now() + INTAKE_TTL_DAYS * 86400000));
+  await setDoc(doc(db, 'intakes', id), strip({
+    ownerUid: uid(),
+    notaryName: notaryName ? String(notaryName).slice(0, 200) : undefined,
+    status: 'pending',
+    createdAt: serverTimestamp(),
+    expiresAt,
+  }));
+  return { id, url: intakeUrl(id), expiresAt: expiresAt.toDate() };
+}
+
+/** Live updates for one request. Returns an unsubscribe function. */
+export function watchIntake(id, onChange) {
+  return onSnapshot(
+    doc(db, 'intakes', id),
+    (snap) => onChange(snap.exists() ? withId(snap) : null, null),
+    (err) => onChange(null, err),
+  );
+}
+
+export function setIntakeStatus(id, status) {
+  return updateDoc(doc(db, 'intakes', id), { status, updatedAt: serverTimestamp() });
 }
 
 /* ───────────────────────── commission image ──────────────────────── */
@@ -150,6 +193,7 @@ export async function logTransaction(input) {
     notes: input.notes,
     signature: input.signature || undefined,
   });
+  const intakeId = typeof input.intakeId === 'string' && input.intakeId ? input.intakeId.slice(0, 64) : undefined;
 
   const txRef = doc(col('transactions'));
   const entryNumber = await runTransaction(db, async (tx) => {
@@ -170,6 +214,7 @@ export async function logTransaction(input) {
       documentDescription: t.documentDescription,
       notes: t.notes,
       signature: t.signature,
+      intakeId,
       voided: false,
       createdAt: serverTimestamp(),
     }));
