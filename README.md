@@ -35,6 +35,8 @@ Private record-keeping dashboard for a notary business, served at
 ├── firestore.rules           # Security rules = database hooks
 ├── firestore.indexes.json
 ├── firebase.json / .firebaserc
+├── icons/                    # Arc seal mark: PNG favicons, home-screen tile, SVG sources
+├── manifest.webmanifest      # Home-screen install metadata
 ├── CNAME                     # thenotarybook.com (GitHub Pages custom domain)
 ├── .nojekyll                 # Serve files as-is
 ├── robots.txt                # Disallow indexing (private tool)

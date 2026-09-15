@@ -11,9 +11,10 @@
   --muted: #5f6b78;
   --border: #d8dee6;
   --border-strong: #b9c3ce;
-  --primary: #1f5f8b;
-  --primary-hover: #1a516f;
-  --primary-ink: #ffffff;
+  --primary: #6b1f2a;
+  --primary-hover: #581822;
+  --primary-ink: #f4efe6;
+  --brass: #c9a24d;
   --danger: #b42318;
   --ok: #1f8a4c;
   --warn: #b7791f;
@@ -36,9 +37,10 @@
     --muted: #98a4b1;
     --border: #2a3441;
     --border-strong: #3a4756;
-    --primary: #5aa5d8;
-    --primary-hover: #74b5e2;
-    --primary-ink: #0b1620;
+    --primary: #d98a94;
+    --primary-hover: #e39ea7;
+    --primary-ink: #2a1216;
+    --brass: #d3b264;
     --danger: #f28b82;
     --ok: #57c38a;
     --warn: #e2b04a;
@@ -98,10 +100,8 @@ main {
   display: flex; align-items: center; gap: 8px; min-width: 0;
   font-weight: 700; font-size: 1.05rem; white-space: nowrap;
 }
-.brand-mark {
-  flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px;
-  border-radius: 8px; background: var(--primary); color: var(--primary-ink); font-weight: 800;
-}
+.brand-mark { flex: none; width: 32px; height: 32px; display: block; }
+.wordmark { font-family: "Cormorant Garamond", "Times New Roman", serif; font-weight: 700; font-size: 1.35rem; letter-spacing: .07em; text-transform: uppercase; line-height: 1; }
 #user-menu { display: flex; align-items: center; gap: 10px; min-width: 0; }
 #user-email { display: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
 
@@ -202,6 +202,7 @@ form.busy { opacity: .6; pointer-events: none; }
   background: transparent; color: var(--muted); font-size: .95rem; font-weight: 600; cursor: pointer;
 }
 .tabs [role="tab"][aria-selected="true"] { background: var(--primary); color: var(--primary-ink); }
+.tabs [role="tab"]:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 
 /* ── Tables → stacked cards on phones ───────────────────────────────── */
 .table-wrap { width: 100%; }
