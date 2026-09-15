@@ -1,4 +1,4 @@
-# Notary Records
+# Notary Book
 
 Private record-keeping dashboard for a notary business, served at
 **https://notary.wes-griffin.com**.

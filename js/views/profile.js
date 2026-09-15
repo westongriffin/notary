@@ -92,16 +92,20 @@ export function render() {
   for (const c of store.credentials) {
     const s = credentialStatus(c);
     body.append(h('tr', {},
-      h('td', {}, CREDENTIAL_TYPES[c.type] || c.type),
-      h('td', {}, c.fileUrl ? h('a', { href: c.fileUrl, target: '_blank', rel: 'noopener' }, c.label) : c.label,
-        c.notes ? h('span', { class: 'sub' }, c.notes) : null),
-      h('td', {}, fmtDate(c.uploadedAt)),
-      h('td', {}, fmtDate(c.expiresAt)),
-      h('td', {}, h('span', { class: `badge badge-${s}` }, STATUS_LABEL[s])),
+      cell('Label', [c.fileUrl ? h('a', { href: c.fileUrl, target: '_blank', rel: 'noopener' }, c.label) : c.label,
+        c.notes ? h('span', { class: 'sub' }, c.notes) : null], 'lead'),
+      cell('Type', CREDENTIAL_TYPES[c.type] || c.type),
+      cell('Issued', fmtDate(c.uploadedAt)),
+      cell('Expires', fmtDate(c.expiresAt)),
+      cell('Status', h('span', { class: `badge badge-${s}` }, STATUS_LABEL[s])),
       h('td', { class: 'actions-cell' },
-        h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => remove(c) }, 'Remove')),
+        h('button', { class: 'btn btn-sm', type: 'button', onclick: () => remove(c) }, 'Remove')),
     ));
   }
+}
+
+function cell(label, content, cls) {
+  return h('td', { class: cls || '', dataset: { label } }, h('span', { class: 'cell' }, content));
 }
 
 function showError(id, msg) { const el = $(id); el.textContent = msg; el.hidden = !msg; }

@@ -92,26 +92,29 @@ export function render() {
     const actions = h('td', { class: 'actions-cell' });
     if (!t.voided) {
       actions.append(
-        h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => openNotes(t) }, 'Edit notes'),
-        ' ',
-        h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => openVoid(t) }, 'Void'),
+        h('button', { class: 'btn btn-sm', type: 'button', onclick: () => openNotes(t) }, 'Edit notes'),
+        h('button', { class: 'btn btn-sm', type: 'button', onclick: () => openVoid(t) }, 'Void'),
       );
     } else {
-      actions.append(h('span', { class: 'badge badge-voided', title: t.voidReason || '' }, 'Voided'));
+      actions.append(h('span', { class: 'badge badge-voided', title: t.voidReason || '' }, `Voided${t.voidReason ? ` · ${t.voidReason}` : ''}`));
     }
     body.append(h('tr', { class: t.voided ? 'voided' : '' },
-      h('td', {}, t.entryNumber),
-      h('td', {}, fmtDateTime(t.actDate)),
-      h('td', {}, t.actType, t.documentDescription ? h('span', { class: 'sub' }, t.documentDescription) : null),
-      h('td', {}, t.clientName, h('span', { class: 'sub' }, t.clientAddress)),
-      h('td', {}, t.idMethod),
-      h('td', { class: 'num' }, fmtMoney(t.fee)),
-      h('td', {}, t.signature
+      cell('Entry', `#${t.entryNumber}`, 'lead'),
+      cell('Date', fmtDateTime(t.actDate)),
+      cell('Act', [t.actType, t.documentDescription ? h('span', { class: 'sub' }, t.documentDescription) : null]),
+      cell('Client', [t.clientName, h('span', { class: 'sub' }, t.clientAddress)]),
+      cell('ID method', t.idMethod),
+      cell('Fee', fmtMoney(t.fee), 'num'),
+      cell('Signature', t.signature
         ? h('img', { class: 'sig-thumb', src: t.signature, alt: 'Signature', title: 'View signature', onclick: () => openSignature(t) })
-        : h('span', { class: 'muted small' }, '—')),
+        : h('span', { class: 'muted' }, 'None')),
       actions,
     ));
   }
+}
+
+function cell(label, content, cls) {
+  return h('td', { class: cls || '', dataset: { label } }, h('span', { class: 'cell' }, content));
 }
 
 function openSignature(t) {
@@ -168,5 +171,5 @@ function exportCsv() {
   const rows = filtered().slice().sort((a, b) => a.entryNumber - b.entryNumber);
   if (!rows.length) return toast('Nothing to export.', 'info');
   const stamp = new Date().toISOString().slice(0, 10);
-  downloadText(`notary-journal-${stamp}.csv`, transactionsToCsv(rows));
+  downloadText(`notary-book-journal-${stamp}.csv`, transactionsToCsv(rows));
 }

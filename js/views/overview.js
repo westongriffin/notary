@@ -31,16 +31,20 @@ export function render() {
   const body = clear($('#ov-recent tbody'));
   for (const t of store.transactions.slice(0, 8)) {
     body.append(h('tr', { class: t.voided ? 'voided' : '' },
-      h('td', {}, t.entryNumber),
-      h('td', {}, fmtDateTime(t.actDate)),
-      h('td', {}, t.actType),
-      h('td', {}, t.clientName),
-      h('td', { class: 'num' }, fmtMoney(t.fee)),
+      cell('Entry', `#${t.entryNumber}`, 'lead'),
+      cell('Date', fmtDateTime(t.actDate)),
+      cell('Act', t.actType),
+      cell('Client', t.clientName),
+      cell('Fee', fmtMoney(t.fee), 'num'),
     ));
   }
   if (!store.transactions.length) {
-    body.append(h('tr', {}, h('td', { colspan: 5, class: 'muted center' }, 'No entries yet. Add one in the Journal tab.')));
+    body.append(h('tr', {}, h('td', { colspan: 5, class: 'empty' }, 'No entries yet. Add one in the Journal tab.')));
   }
+}
+
+function cell(label, content, cls) {
+  return h('td', { class: cls || '', dataset: { label } }, h('span', { class: 'cell' }, content));
 }
 
 function tile(label, value, sub) {
