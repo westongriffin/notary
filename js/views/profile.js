@@ -6,6 +6,8 @@ import {
 } from '../db.js';
 import { CREDENTIAL_TYPES } from '../constants.js';
 import { fileToJpegDataUrl } from '../image.js';
+import { deleteAllMyData } from '../db.js';
+import { signInMethod, reauthenticate, deleteCurrentUser } from '../auth.js';
 
 const STATUS_LABEL = { valid: 'Valid', expiring: 'Expiring soon', expired: 'Expired' };
 
@@ -28,7 +30,44 @@ export function init() {
     $('#commission-dialog').showModal();
   });
 
+  $('#delete-account-open').addEventListener('click', openDelete);
+  $('#delete-form').addEventListener('submit', onDeleteConfirm);
+
   onChange((keys) => { if (!$('#tab-profile').hidden) render(); });
+}
+
+function openDelete() {
+  const f = $('#delete-form');
+  f.reset();
+  $('#delete-error').hidden = true;
+  $('#delete-password-field').hidden = signInMethod() !== 'password';
+  $('#delete-dialog').showModal();
+}
+
+async function onDeleteConfirm(e) {
+  e.preventDefault();
+  const f = $('#delete-form');
+  const confirm = f.confirm.value.trim();
+  const password = f.password.value;
+  const err = $('#delete-error');
+  err.hidden = true;
+  if (confirm !== 'DELETE') { err.textContent = 'Type DELETE exactly to confirm.'; err.hidden = false; return; }
+  setBusy(f, true);
+  try {
+    await reauthenticate(password);      // fresh sign-in first, so the final step cannot fail
+    await deleteAllMyData();
+    await deleteCurrentUser();           // signs the user out; the app returns to the sign-in screen
+    $('#delete-dialog').close();
+    toast('Your account and data have been deleted.', 'success', 6000);
+  } catch (ex) {
+    const code = ex && ex.code;
+    err.textContent = code === 'auth/wrong-password' || code === 'auth/invalid-credential'
+      ? 'That password is incorrect.'
+      : (ex.message || 'Could not delete the account.');
+    err.hidden = false;
+  } finally {
+    setBusy(f, false);
+  }
 }
 
 function renderCommission() {

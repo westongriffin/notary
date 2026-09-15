@@ -1,0 +1,23 @@
+{
+  "appId": "com.thenotarybook.app",
+  "appName": "Notary Book",
+  "webDir": "dist",
+  "backgroundColor": "#6b1f2a",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#6b1f2a",
+    "preferredContentMode": "mobile"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "launchAutoHide": true,
+      "backgroundColor": "#6b1f2a",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#6b1f2a"
+    }
+  }
+}

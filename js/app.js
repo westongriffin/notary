@@ -5,6 +5,7 @@ import { reload, reset } from './store.js';
 import * as overview from './views/overview.js';
 import * as journal from './views/journal.js';
 import * as profile from './views/profile.js';
+import { isNative, hideSplash } from './native.js';
 
 const views = { overview, journal, profile };
 let mode = 'signin'; // or 'signup'
@@ -115,5 +116,20 @@ function leaveApp() {
   setAuthMode('signin');
 }
 
-bindOnce();
-watchAuth((user) => (user ? enterApp(user) : leaveApp()));
+function reportBoot(stage, err) {
+  const el = $('#loading');
+  if (!el) return;
+  el.hidden = false; el.classList.add('error');
+  el.textContent = `Could not start Notary Book (${stage}): ${err && (err.message || err)}` + (err && err.stack ? ' — ' + String(err.stack).split('\n').slice(0, 3).join(' | ') : '');
+}
+try { bindOnce(); } catch (e) { reportBoot('init', e); throw e; }
+if (isNative) {
+  // Google's popup flow does not run inside the iOS web view; email sign-in does.
+  $('#google-btn').hidden = true;
+  $('.or').hidden = true;
+  document.documentElement.classList.add('native');
+}
+watchAuth((user) => {
+  try { (user ? enterApp(user) : leaveApp()); } catch (e) { reportBoot('auth', e); }
+  try { hideSplash(); } catch (e) { reportBoot('splash', e); }
+});

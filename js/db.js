@@ -2,7 +2,7 @@
 // enforces ownership and validation on the server no matter what happens here.
 import {
   db, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
-  query, orderBy, limit, runTransaction, serverTimestamp, Timestamp, onSnapshot,
+  query, where, orderBy, limit, runTransaction, serverTimestamp, Timestamp, onSnapshot, writeBatch,
 } from './firebase.js';
 import { currentUser } from './auth.js';
 import { CREDENTIAL_STATUS, CREDENTIAL_EXPIRING_WINDOW_DAYS } from './constants.js';
@@ -46,6 +46,33 @@ export async function saveProfile(patch) {
   for (const k of allowed) data[k] = patch[k] === undefined ? null : String(patch[k]).trim();
   data.updatedAt = serverTimestamp();
   await updateDoc(profileRef(), data);
+}
+
+/* ───────────────────────────── account deletion ───────────────────────
+   Apple requires in-app account deletion. The journal is normally
+   append-only; firestore.rules only permits deleting entries after the
+   profile has been stamped with deletionRequestedAt, which this function
+   sets first. Everything under users/{uid} plus the user's intake requests
+   is removed; the caller then deletes the Auth user.                     */
+
+export async function deleteAllMyData() {
+  const me = uid();
+  await updateDoc(profileRef(), { deletionRequestedAt: serverTimestamp() });
+
+  const removeAll = async (refs) => {
+    for (let i = 0; i < refs.length; i += 400) {
+      const b = writeBatch(db);
+      refs.slice(i, i + 400).forEach((r) => b.delete(r));
+      await b.commit();
+    }
+  };
+  for (const name of ['credentials', 'media', 'transactions']) {
+    const snap = await getDocs(col(name));
+    await removeAll(snap.docs.map((d) => d.ref));
+  }
+  const intakes = await getDocs(query(collection(db, 'intakes'), where('ownerUid', '==', me)));
+  await removeAll(intakes.docs.map((d) => d.ref));
+  await deleteDoc(profileRef());
 }
 
 /* ─────────────────────────── client intake links ─────────────────────

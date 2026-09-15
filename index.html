@@ -14,7 +14,6 @@
   <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&display=swap">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -219,10 +218,34 @@
           </div>
           <p id="cred-empty" class="muted center" hidden>No credentials recorded.</p>
         </div>
+
+        <div class="card danger-zone">
+          <div class="card-head"><h2>Delete account</h2></div>
+          <p class="muted small">Permanently removes your profile, credentials, commission image, every journal entry, and any open client requests, then deletes your sign-in. Export your journal as CSV first if you need a copy. This cannot be undone.</p>
+          <p class="muted small">Read the <a href="privacy.html">privacy policy</a> for what is stored.</p>
+          <div class="actions"><button id="delete-account-open" class="btn btn-danger" type="button">Delete my account…</button></div>
+        </div>
       </section>
     </section>
 
     <p id="loading" class="muted center">Loading…</p>
+    <script>
+      // If the app fails to boot (script error, blocked module), say so
+      // instead of showing "Loading…" forever.
+      (function () {
+        function report(msg) {
+          var el = document.getElementById('loading');
+          if (el) { el.hidden = false; el.textContent = 'Could not start Notary Book: ' + msg; el.classList.add('error'); }
+        }
+        window.addEventListener('error', function (e) {
+          if (e.target && e.target !== window && e.target.src) return report('failed to load ' + e.target.src.split('/').slice(-2).join('/'));
+          report(e.message || 'unknown error');
+        }, true);
+        window.addEventListener('unhandledrejection', function (e) {
+          var r = e.reason; report((r && (r.code || r.message)) || String(r));
+        });
+      })();
+    </script>
   </main>
 
   <!-- Dialogs -->
@@ -259,6 +282,20 @@
     </form>
   </dialog>
 
+  <dialog id="delete-dialog">
+    <form method="dialog" id="delete-form">
+      <h3>Delete your account?</h3>
+      <p class="muted small">Everything in Notary Book for this account will be erased immediately. Type <b>DELETE</b> to confirm.</p>
+      <label>Confirmation <input name="confirm" autocomplete="off" autocapitalize="characters" required></label>
+      <label id="delete-password-field">Your password <input name="password" type="password" autocomplete="current-password"></label>
+      <p id="delete-error" class="error" hidden></p>
+      <div class="actions">
+        <button class="btn btn-danger" value="confirm" type="submit">Delete everything</button>
+        <button class="btn" value="cancel" type="button" data-close>Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
   <dialog id="sig-dialog">
     <form method="dialog">
       <h3>Signature for entry <span id="sig-entry"></span></h3>
@@ -268,6 +305,13 @@
   </dialog>
 
   <div id="toasts" aria-live="polite"></div>
-  <script type="module" src="js/app.js"></script>
+  <script type="module">
+    // Dynamic import so a boot failure surfaces its real message (a static
+    // module tag only reports the masked "Script error.").
+    import('./js/app.js').catch((e) => {
+      const el = document.getElementById('loading');
+      if (el) { el.hidden = false; el.classList.add('error'); el.textContent = 'Could not start Notary Book: ' + (e && (e.message || e)) + (e && e.stack ? ' — ' + String(e.stack).split('\n').slice(0, 2).join(' ') : ''); }
+    });
+  </script>
 </body>
 </html>

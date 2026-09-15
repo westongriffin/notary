@@ -95,10 +95,12 @@ service cloud.firestore {
       function validProfile(d) {
         return d.keys().hasOnly(['displayName', 'businessName', 'email', 'phone',
                                  'commissionState', 'commissionNumber',
-                                 'nextEntryNumber', 'createdAt', 'updatedAt'])
+                                 'nextEntryNumber', 'createdAt', 'updatedAt',
+                                 'deletionRequestedAt'])
           && d.nextEntryNumber is int && d.nextEntryNumber >= 1
           && d.createdAt is timestamp
           && optTs(d, 'updatedAt')
+          && optTs(d, 'deletionRequestedAt')
           && optStr(d, 'displayName', 200)
           && optStr(d, 'businessName', 200)
           && optStr(d, 'email', 254)
@@ -114,7 +116,13 @@ service cloud.firestore {
         && incoming().createdAt == existing().createdAt
         && (incoming().nextEntryNumber == existing().nextEntryNumber
             || incoming().nextEntryNumber == existing().nextEntryNumber + 1);
-      allow delete: if false;
+      // Deleting the profile is the last step of account deletion.
+      allow delete: if isOwner(uid) && existing().deletionRequestedAt is timestamp;
+
+      // True only while the owner is deleting the whole account.
+      function deletingAccount() {
+        return get(/databases/$(database)/documents/users/$(uid)).data.deletionRequestedAt is timestamp;
+      }
 
       // ─────────────────── media (commission image) ──────────────
       // Firebase Storage needs the Blaze plan, so the image lives here as a
@@ -193,7 +201,9 @@ service cloud.firestore {
           && changedOnly(['notes', 'clientEmail', 'clientPhone', 'voided', 'voidReason', 'updatedAt'])
           && (existing().voided == false || incoming().voided == true)
           && (incoming().voided == existing().voided || str(incoming().voidReason, 500));
-        allow delete: if false;
+        // Journal entries are never deleted individually; only as part of
+        // deleting the whole account (see deletingAccount above).
+        allow delete: if isOwner(uid) && deletingAccount();
       }
     }
   }

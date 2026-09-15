@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#6b1f2a">
+  <title>Notary Book · Privacy Policy</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .doc { max-width: 68ch; margin: 0 auto; }
+    .doc h1 { margin: 8px 0 4px; }
+    .doc h2 { margin: 22px 0 6px; font-size: 1.05rem; }
+    .doc p, .doc li { color: var(--text); }
+    .doc ul { padding-left: 20px; }
+    .doc .updated { color: var(--muted); font-size: .875rem; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html" style="text-decoration:none;color:inherit"><img class="brand-mark" src="icons/icon-64.png" alt="" width="32" height="32"><span class="wordmark">Notary Book</span></a>
+  </header>
+  <main class="doc">
+    <div class="card">
+      <h1>Privacy Policy</h1>
+      <p class="updated">Last updated September 15, 2026</p>
+
+      <p>Notary Book is a private journal for a notary's own records. It is built for the person who signs in; it is not a marketplace, a social product, or an advertising platform. This page explains what the app stores, where, and how you can remove it.</p>
+
+      <h2>What you store in Notary Book</h2>
+      <ul>
+        <li><b>Your account</b>: an email address and a password (or a Google sign-in), managed by Firebase Authentication.</li>
+        <li><b>Your profile</b>: name, business name, contact details, commission state and number, and an image of your commission certificate if you upload one.</li>
+        <li><b>Credential records</b>: labels, issue and expiration dates, and optional links for your commission, bond, insurance, and training.</li>
+        <li><b>Journal entries</b>: the date and time of each notarial act, the act type, the signer's name and address, how identity was verified, the fee, notes, and, if captured, the signer's signature drawn on screen.</li>
+        <li><b>Client intake requests</b>: when you send a client a link, the details they enter (name, address, document, email, phone, signature) are stored with that request and then copied into the journal entry you create.</li>
+      </ul>
+
+      <h2>Where it is stored and who can see it</h2>
+      <p>Data is stored in Google Firebase (Cloud Firestore and Firebase Authentication) in the United States. Access rules restrict every record to the account that created it. The developer does not read your journal, sell data, or share it with anyone. Google processes the data as the hosting provider under its own privacy commitments.</p>
+      <p>Client intake links are protected by a long random token that works once and expires after seven days. Anyone who has the link can submit that one form; nobody can list or browse requests.</p>
+
+      <h2>What the app does not do</h2>
+      <ul>
+        <li>No advertising, analytics trackers, or third-party SDKs beyond Firebase.</li>
+        <li>No location tracking, contacts access, or background data collection.</li>
+        <li>The camera or photo library is used only when you choose to upload a commission image.</li>
+      </ul>
+
+      <h2>Deleting your data</h2>
+      <p>You can delete your account and all of its data at any time from the Profile tab (Delete account). This removes your profile, credentials, commission image, journal entries, and intake requests, then deletes the sign-in account. Deletion is immediate and cannot be undone. You can also export your journal as a CSV file first.</p>
+
+      <h2>Your responsibilities as a notary</h2>
+      <p>Journal-keeping rules vary by state. Notary Book is a record-keeping tool; it does not replace any journal, retention period, or format your commissioning authority requires. Keep whatever official records your jurisdiction expects.</p>
+
+      <h2>Contact</h2>
+      <p>Questions about this policy or your data: <a href="mailto:wes@wes-griffin.com">wes@wes-griffin.com</a>.</p>
+    </div>
+  </main>
+</body>
+</html>

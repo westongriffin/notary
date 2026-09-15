@@ -7,3 +7,16 @@ firebase-debug.*.log
 .env
 .env.*
 .claude/
+
+# Capacitor
+dist/
+ios/App/build/
+ios/App/DerivedData/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
+ios/App/Pods/
+ios/App/public/
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+ios/App/App/config.xml

@@ -4,6 +4,7 @@
 import { $, h, clear, toast, fmtDateTime } from '../dom.js';
 import { store } from '../store.js';
 import { createIntake, watchIntake, setIntakeStatus, intakeUrl } from '../db.js';
+import { canShare, share } from '../native.js';
 
 const KEY = 'notary.activeIntake';
 let form = null;
@@ -21,7 +22,7 @@ export function initIntakePanel({ form: f, signaturePad }) {
   $('#intake-share').addEventListener('click', shareLink);
   $('#intake-phone').addEventListener('input', updateSmsLink);
   $('#intake-dismiss').addEventListener('click', () => setState('idle'));
-  if (!navigator.share) $('#intake-share').hidden = true;
+  if (!canShare()) $('#intake-share').hidden = true;
 
   // Resume a request that was open before a reload.
   try {
@@ -126,7 +127,7 @@ async function copyLink() {
 }
 
 async function shareLink() {
-  if (!active || !navigator.share) return;
-  try { await navigator.share({ title: 'Notary Book', text: 'Please fill in your details and sign for the notarization.', url: active.url }); }
+  if (!active || !canShare()) return;
+  try { await share({ title: 'Notary Book', text: 'Please fill in your details and sign for the notarization.', url: active.url }); }
   catch { /* user dismissed */ }
 }

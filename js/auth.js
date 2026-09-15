@@ -1,6 +1,7 @@
 import {
   auth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signOut, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup,
+  EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, deleteUser,
 } from './firebase.js';
 
 export function watchAuth(cb) { return onAuthStateChanged(auth, cb); }
@@ -11,6 +12,26 @@ export function signUp(email, password) { return createUserWithEmailAndPassword(
 export function signInWithGoogle() { return signInWithPopup(auth, new GoogleAuthProvider()); }
 export function resetPassword(email) { return sendPasswordResetEmail(auth, email); }
 export function logOut() { return signOut(auth); }
+
+/** Which sign-in method the current user used: 'password' or 'google.com'. */
+export function signInMethod() {
+  const u = auth.currentUser;
+  const p = u && u.providerData && u.providerData[0];
+  return p ? p.providerId : 'password';
+}
+
+/** Firebase requires a fresh sign-in before destructive account actions. */
+export async function reauthenticate(password) {
+  const u = auth.currentUser;
+  if (!u) throw new Error('Not signed in');
+  if (signInMethod() === 'password') {
+    if (!password) throw new Error('Enter your password to confirm.');
+    return reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, password));
+  }
+  return reauthenticateWithPopup(u, new GoogleAuthProvider());
+}
+
+export function deleteCurrentUser() { return deleteUser(auth.currentUser); }
 
 const MESSAGES = {
   'auth/invalid-email': 'That email address is not valid.',

@@ -1,0 +1,24 @@
+{
+  "name": "notary-book",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Notary Book — private notary journal (web + iOS via Capacitor)",
+  "scripts": {
+    "build": "sh scripts/build-dist.sh",
+    "ios:sync": "npm run build && npx cap sync ios",
+    "ios:open": "npx cap open ios",
+    "assets": "npx @capacitor/assets generate --ios --iconBackgroundColor '#6b1f2a' --iconBackgroundColorDark '#6b1f2a' --splashBackgroundColor '#6b1f2a' --splashBackgroundColorDark '#6b1f2a'"
+  },
+  "dependencies": {
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
+    "@capacitor/share": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5"
+  }
+}
